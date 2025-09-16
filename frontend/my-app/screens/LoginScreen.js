@@ -4,8 +4,6 @@ import {
   View,
   Text,
   TextInput,
-  Alert,
-  StyleSheet,
   Image,
   TouchableOpacity,
   Modal,
@@ -14,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api";
 import logo from "../assets/logo.png";
 import { Ionicons } from "@expo/vector-icons";
+import styles from "../static/css/GlobalStyles";
 
 export default function LoginScreen({ navigation, setRole, setToken }) {
   const [username, setUsername] = useState("");
@@ -21,7 +20,7 @@ export default function LoginScreen({ navigation, setRole, setToken }) {
   const [loading, setLoading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(""); // "incorrect" or "noAccount"
+  const [modalType, setModalType] = useState(""); // "incorrect", "noAccount", "blocked"
 
   async function login() {
     if (!username.trim() || !password) {
@@ -96,177 +95,85 @@ export default function LoginScreen({ navigation, setRole, setToken }) {
       >
         <Ionicons name="arrow-back" size={24} color="#5a2c2c" />
       </TouchableOpacity>
-      <Image source={logo} style={styles.logo} resizeMode="cover" />
-      <Text style={styles.title}>Log In</Text>
-      <TextInput
-        placeholder="Username"
-        style={styles.input}
-        placeholderTextColor="#7a5c5c"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-        placeholderTextColor="#7a5c5c"
-      />
-      <TouchableOpacity
-        style={styles.button}
-        title={loading ? "Logging in..." : "Login"}
-        onPress={login}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>Log In</Text>
-      </TouchableOpacity>
+      <View style={styles.centerContent}>
+        <Image source={logo} style={styles.logo} resizeMode="cover" />
+        <Text style={styles.title}>Log In</Text>
+        <TextInput
+          placeholder="Username"
+          style={styles.input}
+          placeholderTextColor="#7a5c5c"
+          value={username}
+          onChangeText={setUsername}
+        />
+        <TextInput
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          placeholderTextColor="#7a5c5c"
+        />
+        <TouchableOpacity
+          style={styles.button}
+          title={loading ? "Logging in..." : "Login"}
+          onPress={login}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>Log In</Text>
+        </TouchableOpacity>
 
-      {/* Dev shortcuts */}
-      <Text style={{ marginTop: 16 }}>— Test —</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setRole?.("owner")}
-      >
-        <Text style={styles.buttonText}>Pretend Owner</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setRole?.("admin")}
-      >
-        <Text style={styles.buttonText}>Pretend Admin</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setRole?.("waiter")}
-      >
-        <Text style={styles.buttonText}>Pretend Waiter</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setRole?.("cashier")}
-      >
-        <Text style={styles.buttonText}>Pretend Cashier</Text>
-      </TouchableOpacity>
+        <Text style={{ marginTop: 16 }}>— Test —</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setRole?.("owner")}
+        >
+          <Text style={styles.buttonText}>Pretend Owner</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setRole?.("admin")}
+        >
+          <Text style={styles.buttonText}>Pretend Admin</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setRole?.("waiter")}
+        >
+          <Text style={styles.buttonText}>Pretend Waiter</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setRole?.("cashier")}
+        >
+          <Text style={styles.buttonText}>Pretend Cashier</Text>
+        </TouchableOpacity>
 
-      <Modal transparent={true} animationType="fade" visible={modalVisible}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {modalType === "incorrect"
-                ? "Incorrect Login"
-                : "Account Does Not Exist"}
-            </Text>
-            <Text style={styles.modalMessage}>
-              {modalType === "incorrect"
-                ? "Either your username or password is incorrect. Please try again."
-                : modalType === "blocked"
-                ? "Your account is blocked. Please contact admin."
-                : "The account you entered does not exist. Please sign up first."}
-            </Text>
+        <Modal transparent={true} animationType="fade" visible={modalVisible}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {modalType === "incorrect"
+                  ? "Incorrect Login"
+                  : "Account Does Not Exist"}
+              </Text>
+              <Text style={styles.modalMessage}>
+                {modalType === "incorrect"
+                  ? "Either your username or password is incorrect. Please try again."
+                  : modalType === "blocked"
+                  ? "Your account is blocked. Please contact admin."
+                  : "The account you entered does not exist. Please sign up first."}
+              </Text>
 
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  TextInput: { borderWidth: 1, padding: 8, marginBottom: 12 },
-  container: {
-    flex: 1,
-    backgroundColor: "#f3ebea",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 2,
-    borderColor: "#5a2c2c",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#5a2c2c",
-    marginBottom: 20,
-  },
-  input: {
-    width: "80%",
-    height: 45,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#5a2c2c",
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    marginVertical: 8,
-    color: "#000",
-  },
-  button: {
-    width: "80%",
-    height: 45,
-    backgroundColor: "#5a2c2c",
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalContent: {
-    width: "80%",
-    backgroundColor: "#f3ebea",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#5a2c2c",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#5a2c2c",
-  },
-  modalMessage: {
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#5a2c2c",
-  },
-  modalButton: {
-    backgroundColor: "#5a2c2c",
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-  },
-  modalButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  backButton: {
-    position: "absolute",
-    top: 40,
-    left: 20,
-    zIndex: 10,
-  },
-});

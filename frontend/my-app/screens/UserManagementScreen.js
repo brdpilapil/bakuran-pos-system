@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { BASE_URL } from "../api";
-
 import { Ionicons } from "@expo/vector-icons";
 
 export default function UserManagementScreen({ token, navigation }) {

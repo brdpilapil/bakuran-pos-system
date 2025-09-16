@@ -8,6 +8,7 @@ import AdminDashboard from "./screens/AdminDashboard";
 import UserManagementScreen from "./screens/UserManagementScreen";
 import WaiterDashboard from "./screens/WaiterDashboard";
 import CashierDashboard from "./screens/CashierDashboard";
+import InventoryManagementScreen from "./screens/InventoryManagementScreen";
 
 const Stack = createStackNavigator();
 
@@ -53,6 +54,14 @@ export default function App() {
               options={{ title: "Manage Users" }}
             >
               {(props) => <UserManagementScreen {...props} token={token} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name="InventoryManagement"
+              options={{ title: "Manage Inventory" }}
+            >
+              {(props) => (
+                <InventoryManagementScreen {...props} token={token} />
+              )}
             </Stack.Screen>
           </>
         ) : role === "waiter" ? (
