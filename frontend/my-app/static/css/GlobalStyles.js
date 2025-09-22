@@ -116,6 +116,12 @@ const styles = StyleSheet.create({
     color: "#5a2c2c",
     textDecorationLine: "underline",
   },
+  backButton: {
+    position: "absolute",
+    top: 20,
+    left: 10,
+    zIndex: 10,
+  },
 });
 
 export default styles;

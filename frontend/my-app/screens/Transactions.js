@@ -210,44 +210,6 @@ export default function InventoryScreen({ navigation }) {
             {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
           </View>
         )}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <Text style={styles.subtitle}>Add New Ingredient</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingredient Name"
-              value={name}
-              onChangeText={(text) =>
-                setName(text.charAt(0).toUpperCase() + text.slice(1))
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Unit (e.g., kg, L, pcs)"
-              value={unit}
-              onChangeText={setUnit}
-            />
-            <TouchableOpacity
-              style={[styles.button, !(name && unit) && styles.buttonDisabled]}
-              disabled={!name || !unit}
-              onPress={addIngredient}
-            >
-              <Text style={styles.buttonText}>+ Save Ingredient</Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.subtitle, { marginTop: 20 }]}>
-              Current Stock Totals
-            </Text>
-            {ingredients.map((ingredient) => (
-              <View key={ingredient.id} style={styles.stockItem}>
-                <Ionicons name="cube-outline" size={18} color="#555" />
-                <Text style={styles.stockText}>
-                  {ingredient.name}: {ingredient.quantity} {ingredient.unit}
-                </Text>
-              </View>
-            ))}
-          </View>
-        }
       />
       <Modal
         animationType="fade"

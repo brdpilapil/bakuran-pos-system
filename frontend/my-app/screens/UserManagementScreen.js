@@ -13,6 +13,8 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { BASE_URL } from "../api";
 import { Ionicons } from "@expo/vector-icons";
+import Header from "../components/Header";
+import { confirm } from "../components/Confirm";
 
 export default function UserManagementScreen({ token, navigation }) {
   const [users, setUsers] = useState([]);
@@ -108,20 +110,24 @@ export default function UserManagementScreen({ token, navigation }) {
     setMode("edit");
   }
 
-  async function toggleBlock(id, isBlocked) {
-    try {
-      const res = await fetch(
-        `${BASE_URL}/api/users/${id}/${isBlocked ? "unblock" : "block"}/`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!res.ok) throw new Error("Failed");
-      loadUsers();
-    } catch {
-      Alert.alert("Error", "Failed to update block status");
-    }
+  async function toggleBlock(id, username, isBlocked) {
+    const action = isBlocked ? "Unblock" : "Block";
+
+    confirm(action, username, async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/users/${id}/${isBlocked ? "unblock" : "block"}/`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!res.ok) throw new Error("Failed");
+        loadUsers();
+      } catch {
+        Alert.alert("Error", `Failed to ${action.toLowerCase()} user`);
+      }
+    });
   }
 
   useEffect(() => {
@@ -151,7 +157,7 @@ export default function UserManagementScreen({ token, navigation }) {
         {item.role !== "owner" && (
           <TouchableOpacity
             style={styles.usersButton}
-            onPress={() => toggleBlock(item.id, item.is_blocked)}
+            onPress={() => toggleBlock(item.id, item.username, item.is_blocked)}
           >
             <Text style={styles.buttonText}>
               {item.is_blocked ? "Unblock" : "Block"}
@@ -163,14 +169,21 @@ export default function UserManagementScreen({ token, navigation }) {
   );
 
   return (
-    <ScrollView contentContainerStyle={{ top: 40 }}>
-      <View style={styles.container}>
-        <TouchableOpacity
+    <ScrollView>
+      <Header headerText="User Management" />
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color="#fff"
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#5a2c2c" />
-        </TouchableOpacity>
+        />
+      </TouchableOpacity>
+
+      <View style={styles.container}>
         <Text style={styles.title}>Manage Users</Text>
 
         <Text style={{ marginTop: 12, fontWeight: "bold" }}>
@@ -392,8 +405,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 0,
-    left: 20,
+    top: 20,
+    left: 10,
     zIndex: 10,
   },
 });
