@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 
+let host = "localhost";
+
 try {
   const debuggerHost =
     Constants.manifest2?.extra?.expoGo?.debuggerHost ||
@@ -15,7 +17,11 @@ try {
   console.warn("⚠️ Could not detect Expo debuggerHost:", e.message);
 }
 
-export const BASE_URL = "http://10.0.2.2:8000";
+// Detect platform and assign base URL
+const BASE_URL =
+  Platform.OS === "android"
+    ? `http://${host === "localhost" ? "10.0.2.2" : host}:8000`
+    : `http://${host}:8000`;
 
 console.log("🌍 Using BASE_URL:", BASE_URL);
 

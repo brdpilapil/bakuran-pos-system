@@ -30,21 +30,11 @@ export default function AdminDashboard({ token, role, logout, navigation }) {
         >
           <Text style={globalStyles.buttonText}>Inventory Management</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={globalStyles.button}
-          onPress={() => {
-            navigation.navigate("Ingredients");
-          }}
-        >
-          <Text style={globalStyles.buttonText}>Ingredients</Text>
+        <TouchableOpacity style={globalStyles.button} onPress={() => {}}>
+          <Text style={globalStyles.buttonText}>Ambot</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={globalStyles.button}
-          onPress={() => {
-            navigation.navigate("Transactions");
-          }}
-        >
-          <Text style={globalStyles.buttonText}>Transactions</Text>
+        <TouchableOpacity style={globalStyles.button} onPress={() => {}}>
+          <Text style={globalStyles.buttonText}>Ambot</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={globalStyles.signOutButton} onPress={logout}>

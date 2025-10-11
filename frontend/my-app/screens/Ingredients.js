@@ -126,7 +126,7 @@ export default function RawMaterials({ navigation }) {
   };
 
   return (
-    <View>
+    <View style={globalStyles.body}>
       <Header headerText="Raw Materials" />
       <TouchableOpacity
         style={globalStyles.backButton}
@@ -139,6 +139,23 @@ export default function RawMaterials({ navigation }) {
           style={globalStyles.backButton}
         />
       </TouchableOpacity>
+      <TouchableOpacity
+        style={globalStyles.addButton}
+        onPress={() => {
+          setName("");
+          setUnit("");
+          setEditingIngredient(null);
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons
+          name="add"
+          size={28}
+          color="#fff"
+          style={globalStyles.addButton}
+        />
+      </TouchableOpacity>
+
       <View style={styles.searchContainer}>
         <Ionicons
           name="search"
@@ -238,10 +255,6 @@ export default function RawMaterials({ navigation }) {
 }
 
 export const styles = StyleSheet.create({
-  body: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -321,9 +334,14 @@ export const styles = StyleSheet.create({
     color: "#777",
     marginTop: 5,
   },
+
   // modal
   modalOverlay: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",

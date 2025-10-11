@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api";
 import logo from "../assets/logo.png";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "../static/css/GlobalStyles";
+import globalStyles from "../static/css/GlobalStyles";
 
 export default function LoginScreen({ navigation, setRole, setToken }) {
   const [username, setUsername] = useState("");
@@ -88,19 +88,19 @@ export default function LoginScreen({ navigation, setRole, setToken }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={globalStyles.container}>
       <TouchableOpacity
-        style={styles.backButton}
+        style={globalStyles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Ionicons name="arrow-back" size={24} color="#5a2c2c" />
+        <Ionicons name="arrow-back" size={24} color="#fff" />
       </TouchableOpacity>
-      <View style={styles.centerContent}>
-        <Image source={logo} style={styles.logo} resizeMode="cover" />
-        <Text style={styles.title}>Log In</Text>
+      <View style={globalStyles.centerContent}>
+        <Image source={logo} style={globalStyles.logo} resizeMode="cover" />
+        <Text style={globalStyles.title}>Log In</Text>
         <TextInput
           placeholder="Username"
-          style={styles.input}
+          style={globalStyles.input}
           placeholderTextColor="#7a5c5c"
           value={username}
           onChangeText={setUsername}
@@ -110,53 +110,53 @@ export default function LoginScreen({ navigation, setRole, setToken }) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          style={styles.input}
+          style={globalStyles.input}
           placeholderTextColor="#7a5c5c"
         />
         <TouchableOpacity
-          style={styles.button}
+          style={globalStyles.button}
           title={loading ? "Logging in..." : "Login"}
           onPress={login}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>Log In</Text>
+          <Text style={globalStyles.buttonText}>Log In</Text>
         </TouchableOpacity>
 
         <Text style={{ marginTop: 16 }}>— Test —</Text>
         <TouchableOpacity
-          style={styles.button}
+          style={globalStyles.button}
           onPress={() => setRole?.("owner")}
         >
-          <Text style={styles.buttonText}>Pretend Owner</Text>
+          <Text style={globalStyles.buttonText}>Pretend Owner</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.button}
+          style={globalStyles.button}
           onPress={() => setRole?.("admin")}
         >
-          <Text style={styles.buttonText}>Pretend Admin</Text>
+          <Text style={globalStyles.buttonText}>Pretend Admin</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.button}
+          style={globalStyles.button}
           onPress={() => setRole?.("waiter")}
         >
-          <Text style={styles.buttonText}>Pretend Waiter</Text>
+          <Text style={globalStyles.buttonText}>Pretend Waiter</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.button}
+          style={globalStyles.button}
           onPress={() => setRole?.("cashier")}
         >
-          <Text style={styles.buttonText}>Pretend Cashier</Text>
+          <Text style={globalStyles.buttonText}>Pretend Cashier</Text>
         </TouchableOpacity>
 
         <Modal transparent={true} animationType="fade" visible={modalVisible}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>
+          <View style={globalStyles.modalOverlay}>
+            <View style={globalStyles.modalContent}>
+              <Text style={globalStyles.modalTitle}>
                 {modalType === "incorrect"
                   ? "Incorrect Login"
                   : "Account Does Not Exist"}
               </Text>
-              <Text style={styles.modalMessage}>
+              <Text style={globalStyles.modalMessage}>
                 {modalType === "incorrect"
                   ? "Either your username or password is incorrect. Please try again."
                   : modalType === "blocked"
@@ -165,10 +165,10 @@ export default function LoginScreen({ navigation, setRole, setToken }) {
               </Text>
 
               <TouchableOpacity
-                style={styles.modalButton}
+                style={globalStyles.modalButton}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.modalButtonText}>OK</Text>
+                <Text style={globalStyles.modalButtonText}>OK</Text>
               </TouchableOpacity>
             </View>
           </View>

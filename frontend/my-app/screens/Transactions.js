@@ -12,6 +12,10 @@ import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api, { BASE_URL } from "../api";
+import globalStyles from "../static/css/GlobalStyles";
+import ModalForm from "../static/css/ModalForm";
+import Header from "../components/Header";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function InventoryScreen({ navigation }) {
   const API_BASE = `${BASE_URL}/inventory`;
@@ -23,18 +27,24 @@ export default function InventoryScreen({ navigation }) {
   const [ingredients, setIngredients] = useState([]);
   const [selectedIngredient, setSelectedIngredient] = useState("");
 
-  const [name, setName] = useState("");
-  const [unit, setUnit] = useState("");
-
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("success");
+  const [visibleCount, setVisibleCount] = useState(3);
+  const visibleTransactions = transactions.slice(0, visibleCount);
 
   useEffect(() => {
     fetchTransactions();
     fetchIngredients();
   }, []);
 
+  const handleViewMore = () => {
+    setVisibleCount((prev) => prev + 3);
+  };
+
+  const handleCollapse = () => {
+    setVisibleCount(3);
+  };
   const fetchTransactions = async () => {
     try {
       const res = await api.get(`${API_BASE}/transactions/`);
@@ -95,61 +105,82 @@ export default function InventoryScreen({ navigation }) {
     }
   };
 
-  const addIngredient = async () => {
-    if (!name || !unit) {
-      setModalType("error");
-      setModalMessage("Please fill in all fields");
-      setModalVisible(true);
-      return;
-    }
-
-    const exists = ingredients.some(
-      (ingredient) => ingredient.name.toLowerCase() === name.toLowerCase()
-    );
-    if (exists) {
-      setModalType("error");
-      setModalMessage("This ingredient already exists!");
-      setModalVisible(true);
-      return;
-    }
-
-    try {
-      const res = await api.post(`${API_BASE}/ingredients/`, { name, unit });
-      setModalType("success");
-      setModalMessage("Ingredient added successfully!");
-      setModalVisible(true);
-      setName("");
-      setUnit("");
-      setIngredients([...ingredients, res.data]);
-    } catch (err) {
-      console.error("Add ingredient error:", err.response?.data || err.message);
-      setModalType("error");
-      setModalMessage("Failed to add ingredient");
-      setModalVisible(true);
-    }
-  };
-
   return (
-    <View style={styles.body}>
-      <FlatList
-        data={transactions}
-        keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={26} color="#5a2c2c" />
-            </TouchableOpacity>
+    <ScrollView style={globalStyles.body}>
+      <Header headerText="Transactions" />
+      <TouchableOpacity
+        style={globalStyles.backButton}
+        onPress={() => navigation.goBack()}
+      ></TouchableOpacity>
+      <TouchableOpacity
+        style={globalStyles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color="#fff"
+          style={globalStyles.backButton}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={globalStyles.addButton}
+        onPress={() => {
+          setSelectedIngredient("");
+          setQuantity("");
+          setNote("");
+          setTransactionType("");
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons
+          name="add"
+          size={28}
+          color="#fff"
+          style={globalStyles.addButton}
+        />
+      </TouchableOpacity>
+      <View style={globalStyles.container}>
+        <Text style={styles.title}>Recent Transactions</Text>
 
-            <Text style={styles.title}>Inventory Transactions</Text>
+        {visibleTransactions.map((item) => (
+          <View key={item.id.toString()} style={styles.transactionCard}>
+            <Text style={styles.transactionText}>
+              <Text style={{ fontWeight: "bold" }}>{item.ingredient.name}</Text>{" "}
+              ({item.ingredient.unit}) →{" "}
+              <Text style={{ color: "#2a7" }}>{item.transaction_type}</Text>{" "}
+              {item.quantity}
+            </Text>
+            {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
+          </View>
+        ))}
 
-            {/* Transaction form */}
+        {/* Buttons */}
+        {visibleCount < transactions.length && (
+          <TouchableOpacity onPress={handleViewMore}>
+            <Text style={{ color: "blue", marginTop: 10 }}>View More</Text>
+          </TouchableOpacity>
+        )}
+
+        {visibleCount > 8 && (
+          <TouchableOpacity onPress={handleCollapse}>
+            <Text style={{ color: "red", marginTop: 10 }}>Collapse</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={ModalForm.modalOverlay}>
+          <View style={ModalForm.modalContainer}>
             <Picker
               selectedValue={selectedIngredient}
               onValueChange={(val) => setSelectedIngredient(val)}
-              style={styles.input}
+              style={ModalForm.Picker}
             >
               <Picker.Item label="-- Select Ingredient --" value="" />
               {ingredients.map((ingredient) => (
@@ -164,7 +195,7 @@ export default function InventoryScreen({ navigation }) {
             <Picker
               selectedValue={transactionType}
               onValueChange={(val) => setTransactionType(val)}
-              style={styles.input}
+              style={ModalForm.Picker}
             >
               <Picker.Item label="-- Select Transaction Type --" value="" />
               <Picker.Item label="Stock In (Purchase)" value="IN" />
@@ -173,45 +204,42 @@ export default function InventoryScreen({ navigation }) {
             </Picker>
 
             <TextInput
-              style={styles.input}
+              style={ModalForm.input}
               placeholder="Quantity"
               value={quantity}
               onChangeText={setQuantity}
               keyboardType="numeric"
             />
             <TextInput
-              style={styles.input}
+              style={ModalForm.input}
               placeholder="Note"
               value={note}
               onChangeText={setNote}
             />
 
-            <TouchableOpacity
-              style={[
-                styles.button,
-                !(selectedIngredient && transactionType && quantity) &&
-                  styles.buttonDisabled,
-              ]}
-              disabled={!selectedIngredient || !transactionType || !quantity}
-              onPress={addTransaction}
-            >
-              <Text style={styles.buttonText}>+ Add Transaction</Text>
-            </TouchableOpacity>
+            <View style={ModalForm.modalButtonContainer}>
+              <TouchableOpacity
+                style={ModalForm.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={ModalForm.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  ModalForm.modalButton,
+                  !(selectedIngredient && transactionType && quantity) &&
+                    ModalForm.buttonDisabled,
+                ]}
+                disabled={!selectedIngredient || !transactionType || !quantity}
+                onPress={addTransaction}
+              >
+                <Text style={ModalForm.buttonText}>Add Transaction</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.transactionCard}>
-            <Text style={styles.transactionText}>
-              <Text style={{ fontWeight: "bold" }}>{item.ingredient.name}</Text>{" "}
-              ({item.ingredient.unit}) →{" "}
-              <Text style={{ color: "#2a7" }}>{item.transaction_type}</Text>{" "}
-              {item.quantity}
-            </Text>
-            {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
-          </View>
-        )}
-      />
-      <Modal
+        </View>
+      </Modal>
+      {/* <Modal
         animationType="fade"
         transparent={true}
         visible={modalVisible}
@@ -241,8 +269,8 @@ export default function InventoryScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </View>
+      </Modal> */}
+    </ScrollView>
   );
 }
 
@@ -307,6 +335,8 @@ export const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 3,
+    width: "100%",
+    minHeight: 70,
   },
   transactionText: { fontSize: 15, color: "#333" },
   note: { fontStyle: "italic", color: "#777", marginTop: 4 },

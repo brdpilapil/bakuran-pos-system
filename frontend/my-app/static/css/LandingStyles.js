@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-const globalStyles = StyleSheet.create({
+const landingStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#292929",
@@ -194,6 +194,24 @@ const globalStyles = StyleSheet.create({
     color: "#292929",
     marginBottom: 4,
   },
+  phoneFrame: {
+    width: 360,
+    height: 640,
+    overflow: "hidden", // hides scrollbars and overflow content
+    borderRadius: 20, // optional, makes it look like a phone
+    backgroundColor: "#f3ebea",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  webWrapper: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#e0e0e0", // light gray backdrop for contrast
+  },
 });
 
-export default globalStyles;
+export default landingStyles;

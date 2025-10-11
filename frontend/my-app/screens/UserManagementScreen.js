@@ -9,12 +9,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { BASE_URL } from "../api";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/Header";
 import { confirm } from "../components/Confirm";
+import globalStyles from "../static/css/GlobalStyles";
 
 export default function UserManagementScreen({ token, navigation }) {
   const [users, setUsers] = useState([]);
@@ -29,6 +31,8 @@ export default function UserManagementScreen({ token, navigation }) {
     password: "",
     role: "",
   });
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   async function loadUsers() {
     try {
@@ -150,16 +154,19 @@ export default function UserManagementScreen({ token, navigation }) {
       <View style={{ flexDirection: "row", gap: 4 }}>
         <TouchableOpacity
           style={styles.usersButton}
-          onPress={() => startEdit(item)}
+          onPress={() => {
+            startEdit(item);
+            setModalVisible(true);
+          }}
         >
-          <Text style={styles.buttonText}>Edit</Text>
+          <Text style={globalStyles.buttonText}>Edit</Text>
         </TouchableOpacity>
         {item.role !== "owner" && (
           <TouchableOpacity
             style={styles.usersButton}
             onPress={() => toggleBlock(item.id, item.username, item.is_blocked)}
           >
-            <Text style={styles.buttonText}>
+            <Text style={globalStyles.buttonText}>
               {item.is_blocked ? "Unblock" : "Block"}
             </Text>
           </TouchableOpacity>
@@ -172,102 +179,125 @@ export default function UserManagementScreen({ token, navigation }) {
     <ScrollView>
       <Header headerText="User Management" />
       <TouchableOpacity
-        style={styles.backButton}
+        style={globalStyles.backButton}
         onPress={() => navigation.goBack()}
       >
         <Ionicons
           name="arrow-back"
           size={24}
           color="#fff"
-          style={styles.backButton}
+          style={globalStyles.backButton}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={globalStyles.addButton}
+        onPress={() => {
+          resetForm();
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons
+          name="add"
+          size={28}
+          color="#fff"
+          style={globalStyles.addButton}
         />
       </TouchableOpacity>
 
-      <View style={styles.container}>
-        <Text style={styles.title}>Manage Users</Text>
-
-        <Text style={{ marginTop: 12, fontWeight: "bold" }}>
-          {mode === "create" ? "Create User" : "Edit User"}
-        </Text>
-
-        {/* Inputs */}
-        <TextInput
-          placeholder="First Name"
-          value={form.first_name}
-          onChangeText={(t) => setForm({ ...form, first_name: t })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Last Name"
-          value={form.last_name}
-          onChangeText={(t) => setForm({ ...form, last_name: t })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Username"
-          value={form.username}
-          onChangeText={(t) => setForm({ ...form, username: t })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Email"
-          value={form.email}
-          onChangeText={(t) => setForm({ ...form, email: t })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Contact Number"
-          value={form.contact_number}
-          onChangeText={(t) => setForm({ ...form, contact_number: t })}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Password"
-          value={form.password}
-          onChangeText={(t) => setForm({ ...form, password: t })}
-          secureTextEntry
-          style={styles.input}
-        />
-
-        <Text style={{ marginTop: 8, fontWeight: "bold" }}>Role</Text>
-        <View style={styles.input}>
-          <Picker
-            style={{ marginTop: -5 }}
-            selectedValue={form.role}
-            onValueChange={(val) => setForm({ ...form, role: val })}
-          >
-            <Picker.Item label="-- Select a Role --" value="" />
-            <Picker.Item label="Owner" value="owner" />
-            <Picker.Item label="Admin" value="admin" />
-            <Picker.Item label="Cashier" value="cashier" />
-            <Picker.Item label="Waiter" value="waiter" />
-          </Picker>
-        </View>
-
-        {mode === "create" ? (
-          <TouchableOpacity style={styles.button} onPress={createUser}>
-            <Text style={styles.buttonText}>Create User</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity style={styles.usersButton} onPress={updateUser}>
-              <Text style={styles.buttonText}>Update</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelButton} onPress={resetForm}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <Text style={{ marginTop: 12, fontWeight: "bold" }}>Users</Text>
+      <View style={globalStyles.container}>
+        <Text style={globalStyles.title}>Manage Users</Text>
       </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>
+              {mode === "create" ? "Add User" : "Edit User"}
+            </Text>
+
+            <TextInput
+              placeholder="First Name"
+              value={form.first_name}
+              onChangeText={(t) => setForm({ ...form, first_name: t })}
+              style={globalStyles.input}
+            />
+            <TextInput
+              placeholder="Last Name"
+              value={form.last_name}
+              onChangeText={(t) => setForm({ ...form, last_name: t })}
+              style={globalStyles.input}
+            />
+            <TextInput
+              placeholder="Username"
+              value={form.username}
+              onChangeText={(t) => setForm({ ...form, username: t })}
+              style={globalStyles.input}
+            />
+            <TextInput
+              placeholder="Email"
+              value={form.email}
+              onChangeText={(t) => setForm({ ...form, email: t })}
+              style={globalStyles.input}
+            />
+            <TextInput
+              placeholder="Contact Number"
+              value={form.contact_number}
+              onChangeText={(t) => setForm({ ...form, contact_number: t })}
+              style={globalStyles.input}
+            />
+            <TextInput
+              placeholder="Password"
+              value={form.password}
+              onChangeText={(t) => setForm({ ...form, password: t })}
+              secureTextEntry
+              style={globalStyles.input}
+            />
+
+            <Text style={{ fontWeight: "bold" }}>Role</Text>
+            <View style={globalStyles.input}>
+              <Picker
+                selectedValue={form.role}
+                onValueChange={(val) => setForm({ ...form, role: val })}
+              >
+                <Picker.Item label="-- Select a Role --" value="" />
+                <Picker.Item label="Owner" value="owner" />
+                <Picker.Item label="Admin" value="admin" />
+                <Picker.Item label="Cashier" value="cashier" />
+                <Picker.Item label="Waiter" value="waiter" />
+              </Picker>
+            </View>
+
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={mode === "create" ? createUser : updateUser}
+              >
+                <Text style={styles.modalButtonText}>
+                  {mode === "create" ? "Save" : "Update"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Users list */}
       <FlatList
         data={users}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderUserItem}
-        scrollEnabled={false} // so ScrollView handles the scroll
+        scrollEnabled={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
     </ScrollView>
@@ -283,55 +313,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginHorizontal: 12,
   },
-  userText: { fontWeight: "bold" },
-  userSub: { color: "#555", fontSize: 12 },
-
-  TextInput: { borderWidth: 1, padding: 8, marginBottom: 12 },
-  container: {
-    flex: 1,
-    backgroundColor: "#f3ebea",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 2,
-    borderColor: "#5a2c2c",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
+  userText: {
     fontWeight: "bold",
-    color: "#5a2c2c",
-    marginBottom: 20,
   },
-  input: {
-    width: "80%",
-    height: 45,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#5a2c2c",
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    marginVertical: 8,
-    color: "#000",
-  },
-  button: {
-    width: "80%",
-    height: 45,
-    backgroundColor: "#5a2c2c",
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  userSub: {
+    color: "#555",
+    fontSize: 12,
   },
   usersButton: {
     backgroundColor: "#5a2c2c",
@@ -351,62 +338,63 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  signOutButton: {
-    backgroundColor: "#fff",
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    marginTop: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#5a2c2c",
-    textDecorationLine: "underline",
-  },
+
+  //modal
+
   modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
+    alignItems: "center",
   },
-  modalContent: {
+  modalContainer: {
     width: "80%",
-    backgroundColor: "#f3ebea",
-    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderRadius: 15,
     padding: 20,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
     borderWidth: 2,
-    borderColor: "#5a2c2c",
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#5a2c2c",
-  },
-  modalMessage: {
-    fontSize: 14,
+  modalText: {
+    fontSize: 16,
     textAlign: "center",
     marginBottom: 20,
-    color: "#5a2c2c",
   },
   modalButton: {
     backgroundColor: "#5a2c2c",
-    borderRadius: 25,
     paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
   modalButtonText: {
     color: "#fff",
+    fontSize: 16,
     fontWeight: "bold",
   },
-  backButton: {
-    position: "absolute",
-    top: 20,
-    left: 10,
-    zIndex: 10,
+  cancelButtonText: {
+    color: "#5a2c2c",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 20,
   },
 });

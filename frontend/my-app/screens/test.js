@@ -1,442 +1,465 @@
-import React, { useState } from "react";
-import { View, Text, Button, TouchableOpacity, TextInput, FlatList, Modal } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api, { BASE_URL } from "../api";
 
-const Stack = createStackNavigator();
+export default function InventoryScreen({ navigation }) {
+  const API_BASE = ${BASE_URL}/inventory;
 
-// ---------- FRAME 1 ----------
-function HomeScreen({ navigation }) {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-      <Text style={{ fontSize: 24, marginBottom: 20 }}>Inventory</Text>
-      <TouchableOpacity
-        style={{ backgroundColor: "#5c2121", padding: 15, borderRadius: 10, marginBottom: 15 }}
-        onPress={() => navigation.navigate("RawMaterials")}
-      >
-        <Text style={{ color: "#fff" }}>Raw Materials</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{ backgroundColor: "#5c2121", padding: 15, borderRadius: 10 }}
-        onPress={() => navigation.navigate("Transactions")}
-      >
-        <Text style={{ color: "#fff" }}>Transactions</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+  const [transactions, setTransactions] = useState([]);
+  const [quantity, setQuantity] = useState("");
+  const [cost, setCost] = useState("");
+  const [store, setStore] = useState("");
+  const [note, setNote] = useState("");
+  const [transactionType, setTransactionType] = useState("");
+  const [ingredients, setIngredients] = useState([]);
+  const [selectedIngredient, setSelectedIngredient] = useState("");
 
-// ---------- FRAME 2 ----------
-function RawMaterials({ navigation }) {
-  const [materials, setMaterials] = useState([
-    { id: "1", name: "Beef", qty: 10 },
-    { id: "2", name: "Garlic", qty: 5 },
-  ]);
+  const [name, setName] = useState("");
+  const [unit, setUnit] = useState("");
 
-  const deleteItem = (id) => {
-    setMaterials(materials.filter((item) => item.id !== id));
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("success");
+
+  const [visibleCount, setVisibleCount] = useState(5);
+
+  useEffect(() => {
+    fetchTransactions();
+    fetchIngredients();
+  }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await api.get(${API_BASE}/transactions/);
+      setTransactions(res.data);
+    } catch (err) {
+      console.error("Fetch error:", err.response?.data || err.message);
+    }
+  };
+
+  const fetchIngredients = async () => {
+    try {
+      const res = await api.get(${BASE_URL}/inventory/ingredients/);
+      setIngredients(res.data);
+    } catch (err) {
+      console.error(
+        "Fetch ingredients error:",
+        err.response?.data || err.message
+      );
+    }
+  };
+
+  const addTransaction = async () => {
+    if (!selectedIngredient || !transactionType || !quantity) {
+      setModalType("error");
+      setModalMessage("Please fill in all fields");
+      setModalVisible(true);
+      return;
+    }
+    try {
+      const token = await AsyncStorage.getItem("token");
+      await api.post(
+        ${API_BASE}/transactions/,
+        {
+          ingredient_id: selectedIngredient,
+          transaction_type: transactionType,
+          quantity: quantity,
+          cost: cost || 0,
+          store: store || "",
+          note: note,
+        },
+        { headers: { Authorization: Bearer ${token} } }
+      );
+
+      setSelectedIngredient("");
+      setQuantity("");
+      setCost("");
+      setStore("");
+      setNote("");
+      setTransactionType("");
+      fetchTransactions();
+      fetchIngredients();
+    } catch (err) {
+      console.error("Add error:", err.response?.data || err.message);
+      setModalType("error");
+      if (err.response?.data?.detail) {
+        setModalMessage(err.response.data.detail);
+      } else {
+        setModalMessage("Failed to add transaction");
+      }
+      setModalVisible(true);
+    }
+  };
+
+  const addIngredient = async () => {
+    if (!name || !unit) {
+      setModalType("error");
+      setModalMessage("Please fill in all fields");
+      setModalVisible(true);
+      return;
+    }
+
+    const exists = ingredients.some(
+      (ingredient) => ingredient.name.toLowerCase() === name.toLowerCase()
+    );
+    if (exists) {
+      setModalType("error");
+      setModalMessage("This ingredient already exists!");
+      setModalVisible(true);
+      return;
+    }
+
+    try {
+      const res = await api.post(${API_BASE}/ingredients/, { name, unit });
+      setModalType("success");
+      setModalMessage("Ingredient added successfully!");
+      setModalVisible(true);
+      setName("");
+      setUnit("");
+      setIngredients([...ingredients, res.data]);
+    } catch (err) {
+      console.error("Add ingredient error:", err.response?.data || err.message);
+      setModalType("error");
+      setModalMessage("Failed to add ingredient");
+      setModalVisible(true);
+    }
   };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      {materials.map((item) => (
-        <View
-          key={item.id}
-          style={{ borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 8 }}
+    <ScrollView style={styles.body}>
+      {/* Transaction Form Card */}
+      <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          <Text>Name: {item.name}</Text>
-          <Text>Quantity: {item.qty}</Text>
+          <Ionicons name="arrow-back" size={26} color="#5a2c2c" />
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Inventory Transactions</Text>
+
+        <Picker
+          selectedValue={selectedIngredient}
+          onValueChange={(val) => setSelectedIngredient(val)}
+          style={styles.Picker}
+        >
+          <Picker.Item label="-- Select Ingredient --" value="" />
+          {ingredients.map((ingredient) => (
+            <Picker.Item
+              key={ingredient.id}
+              label={`${ingredient.name} (${ingredient.unit})`}
+              value={ingredient.id}
+            />
+          ))}
+        </Picker>
+
+        <Picker
+          selectedValue={transactionType}
+          onValueChange={(val) => setTransactionType(val)}
+          style={styles.Picker}
+        >
+          <Picker.Item label="-- Select Transaction Type --" value="" />
+          <Picker.Item label="Stock In (Purchase)" value="IN" />
+          <Picker.Item label="Stock Out (Usage)" value="OUT" />
+          <Picker.Item label="Adjustment" value="ADJ" />
+        </Picker>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Quantity"
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Cost"
+          value={cost}
+          onChangeText={setCost}
+          keyboardType="numeric"
+          editable={transactionType === "IN"}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Store"
+          value={store}
+          onChangeText={setStore}
+          editable={transactionType === "IN"}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Note"
+          value={note}
+          onChangeText={setNote}
+        />
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            !(selectedIngredient && transactionType && quantity) &&
+              styles.buttonDisabled,
+          ]}
+          disabled={!selectedIngredient || !transactionType || !quantity}
+          onPress={addTransaction}
+        >
+          <Text style={styles.buttonText}>+ Add Transaction</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Stock History */}
+      <View style={styles.card}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.subtitle}>Stock History</Text>
           <TouchableOpacity
-            style={{ backgroundColor: "red", padding: 8, marginTop: 5, borderRadius: 5 }}
-            onPress={() => deleteItem(item.id)}
+            onPress={() =>
+              setVisibleCount(visibleCount === 5 ? transactions.length : 5)
+            }
           >
-            <Text style={{ color: "#fff" }}>DELETE</Text>
+            <Text style={styles.toggleText}>
+              {visibleCount === 5 ? "Expand" : "Collapse"}
+            </Text>
           </TouchableOpacity>
         </View>
-      ))}
-    </View>
-  );
-}
 
-// ---------- FRAME 3 ----------
-function Transactions({ navigation }) {
-  const [category, setCategory] = useState("All");
-  const [data] = useState([
-    { id: "1", name: "Beef", category: "Meat" },
-    { id: "2", name: "Garlic", category: "Spices" },
-  ]);
+        {transactions.slice(0, visibleCount).map((item) => (
+          <View key={item.id} style={styles.transactionCard}>
+            <Text style={styles.transactionText}>
+              <Text style={{ fontWeight: "bold" }}>{item.ingredient.name}</Text>{" "}
+              ({item.ingredient.unit}) →{" "}
+              <Text style={{ color: "#2a7" }}>{item.transaction_type}</Text>{" "}
+              {item.quantity}
+            </Text>
+            {item.cost ? <Text style={styles.note}>₱{Number(item.cost).toFixed(2)}</Text> : null}
+            {item.store ? <Text style={styles.note}>{item.store}</Text> : null}
+            {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
+          </View>
+        ))}
+      </View>
 
-  const filtered = category === "All" ? data : data.filter((d) => d.category === category);
+      {/* Add Ingredient */}
+      <View style={styles.footer}>
+        <Text style={styles.subtitle}>Add New Ingredient</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ingredient Name"
+          value={name}
+          onChangeText={(text) =>
+            setName(text.charAt(0).toUpperCase() + text.slice(1))
+          }
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Unit (e.g., kg, L, pcs)"
+          value={unit}
+          onChangeText={setUnit}
+        />
+        <TouchableOpacity
+          style={[styles.button, !(name && unit) && styles.buttonDisabled]}
+          disabled={!name || !unit}
+          onPress={addIngredient}
+        >
+          <Text style={styles.buttonText}>+ Save Ingredient</Text>
+        </TouchableOpacity>
 
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Picker selectedValue={category} onValueChange={(item) => setCategory(item)}>
-        <Picker.Item label="All" value="All" />
-        <Picker.Item label="Meat" value="Meat" />
-        <Picker.Item label="Spices" value="Spices" />
-        <Picker.Item label="Vegetables" value="Vegetables" />
-      </Picker>
+        <Text style={[styles.subtitle, { marginTop: 20 }]}>
+          Current Stock Totals
+        </Text>
+        {ingredients.map((ingredient) => (
+          <View key={ingredient.id} style={styles.stockItem}>
+            <Ionicons name="cube-outline" size={18} color="#555" />
+            <Text style={styles.stockText}>
+              {ingredient.name}: {ingredient.quantity} {ingredient.unit}
+            </Text>
+          </View>
+        ))}
+      </View>
 
-      {filtered.map((item) => (
-        <View key={item.id} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-          <Text>{item.name}</Text>
-          <TouchableOpacity
-            style={{ backgroundColor: "#5c2121", padding: 8, borderRadius: 5 }}
-            onPress={() => navigation.navigate("TransactionDetails", { ingredient: item })}
-          >
-            <Text style={{ color: "#fff" }}>View Details</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: 20,
-          backgroundColor: "#5c2121",
-          padding: 15,
-          borderRadius: 30,
-        }}
-        onPress={() => navigation.navigate("NewTransaction")}
+      {/* Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <Text style={{ color: "#fff", fontSize: 20 }}>+</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-// ---------- FRAME 4 ----------
-function NewTransaction({ navigation }) {
-  const [modalVisible, setModalVisible] = useState(true);
-  const [ingredient, setIngredient] = useState("Add new ingredient...");
-  const [unit, setUnit] = useState("");
-  const [qty, setQty] = useState("");
-  const [price, setPrice] = useState("");
-  const [store, setStore] = useState("");
-
-  return (
-    <Modal visible={modalVisible} animationType="slide" transparent={true}>
-      <View style={{ flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-        <View style={{ margin: 20, padding: 20, backgroundColor: "#fff", borderRadius: 10 }}>
-          <Text style={{ fontSize: 18, marginBottom: 10 }}>New Transaction</Text>
-
-          <Picker selectedValue={ingredient} onValueChange={(val) => setIngredient(val)}>
-            <Picker.Item label="Add new ingredient.." value="new" />
-            <Picker.Item label="Beef" value="Beef" />
-            <Picker.Item label="Garlic" value="Garlic" />
-            <Picker.Item label="Onion" value="Onion" />
-          </Picker>
-
-          {ingredient === "new" && (
-            <TextInput placeholder="Type new ingredient" style={{ borderBottomWidth: 1, marginBottom: 10 }} />
-          )}
-
-          <TextInput
-            placeholder="Quantity"
-            keyboardType="numeric"
-            value={qty}
-            onChangeText={setQty}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <Picker selectedValue={unit} onValueChange={(val) => setUnit(val)}>
-            <Picker.Item label="pc/s" value="pcs" />
-            <Picker.Item label="kg/s" value="kg" />
-            <Picker.Item label="sack/s" value="sack" />
-            <Picker.Item label="pack/s" value="pack" />
-          </Picker>
-
-          <TextInput
-            placeholder="Price"
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <TextInput
-            placeholder="Store"
-            value={store}
-            onChangeText={setStore}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Button title="Save" onPress={() => { setModalVisible(false); navigation.goBack(); }} />
-            <Button title="Cancel" color="red" onPress={() => { setModalVisible(false); navigation.goBack(); }} />
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContainer,
+              modalType === "error"
+                ? { borderColor: "#e74c3c" }
+                : { borderColor: "#2ecc71" },
+            ]}
+          >
+            <Ionicons
+              name={modalType === "error" ? "close-circle" : "checkmark-circle"}
+              size={48}
+              color={modalType === "error" ? "#e74c3c" : "#2ecc71"}
+              style={{ marginBottom: 10 }}
+            />
+            <Text style={styles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    </ScrollView>
   );
 }
 
-// ---------- FRAME 5 ----------
-function TransactionDetails({ route }) {
-  const { ingredient } = route.params;
-  const transactions = [
-    { id: "1", type: "IN", date: "09/18/2025", qty: "2 kg", price: "₱350", store: "Store A" },
-    { id: "2", type: "OUT", date: "09/18/2025", qty: "1 kg" },
-    { id: "3", type: "IN", date: "09/18/2025", qty: "3 kg", price: "₱500", store: "Store B" },
-  ];
-
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 22, marginBottom: 15 }}>{ingredient.name}</Text>
-      {transactions.map((t) => (
-        <View key={t.id} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-          <Text>{t.type}</Text>
-          <Text>
-            {t.date} - {t.qty} {t.price ?  - ${t.price} : ""} {t.store ?  - ${t.store} : ""}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-// ---------- MAIN APP ----------
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="RawMaterials" component={RawMaterials} />
-        <Stack.Screen name="Transactions" component={Transactions} />
-        <Stack.Screen name="NewTransaction" component={NewTransaction} />
-        <Stack.Screen name="TransactionDetails" component={TransactionDetails} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-Mica Julianna
-import React, { useState } from "react";
-import { View, Text, Button, TouchableOpacity, TextInput, FlatList, Modal, Image } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import { Picker } from "@react-native-picker/picker";
-
-const Stack = createStackNavigator();
-const logo = require("./assets/logo.png"); // <-- your logo here
-
-// Header with logo
-function Header() {
-  return (
-    <View style={{ alignItems: "center", marginVertical: 15 }}>
-      <Image source={logo} style={{ width: 100, height: 100, resizeMode: "contain" }} />
-    </View>
-  );
-}
-
-// ---------- FRAME 1 ----------
-function HomeScreen({ navigation }) {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-      <Header />
-      <Text style={{ fontSize: 24, marginBottom: 20 }}>Inventory</Text>
-      <TouchableOpacity
-        style={{ backgroundColor: "#5c2121", padding: 15, borderRadius: 10, marginBottom: 15 }}
-        onPress={() => navigation.navigate("RawMaterials")}
-      >
-        <Text style={{ color: "#fff" }}>Raw Materials</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{ backgroundColor: "#5c2121", padding: 15, borderRadius: 10 }}
-        onPress={() => navigation.navigate("Transactions")}
-      >
-        <Text style={{ color: "#fff" }}>Transactions</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-// ---------- FRAME 2 ----------
-function RawMaterials({ navigation }) {
-  const [materials, setMaterials] = useState([
-    { id: "1", name: "Beef", qty: 10 },
-    { id: "2", name: "Garlic", qty: 5 },
-  ]);
-
-  const deleteItem = (id) => {
-    setMaterials(materials.filter((item) => item.id !== id));
-  };
-
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Header />
-      {materials.map((item) => (
-        <View
-          key={item.id}
-          style={{ borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 8 }}
-        >
-          <Text>Name: {item.name}</Text>
-          <Text>Quantity: {item.qty}</Text>
-          <TouchableOpacity
-            style={{ backgroundColor: "red", padding: 8, marginTop: 5, borderRadius: 5 }}
-            onPress={() => deleteItem(item.id)}
-          >
-            <Text style={{ color: "#fff" }}>DELETE</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-// ---------- FRAME 3 ----------
-function Transactions({ navigation }) {
-  const [category, setCategory] = useState("All");
-  const [data] = useState([
-    { id: "1", name: "Beef", category: "Meat" },
-    { id: "2", name: "Garlic", category: "Spices" },
-  ]);
-
-  const filtered = category === "All" ? data : data.filter((d) => d.category === category);
-
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Header />
-      <Picker selectedValue={category} onValueChange={(item) => setCategory(item)}>
-        <Picker.Item label="All" value="All" />
-        <Picker.Item label="Meat" value="Meat" />
-        <Picker.Item label="Spices" value="Spices" />
-        <Picker.Item label="Vegetables" value="Vegetables" />
-      </Picker>
-
-      {filtered.map((item) => (
-        <View key={item.id} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-          <Text>{item.name}</Text>
-          <TouchableOpacity
-            style={{ backgroundColor: "#5c2121", padding: 8, borderRadius: 5 }}
-            onPress={() => navigation.navigate("TransactionDetails", { ingredient: item })}
-          >
-            <Text style={{ color: "#fff" }}>View Details</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: 20,
-          backgroundColor: "#5c2121",
-          padding: 15,
-          borderRadius: 30,
-        }}
-        onPress={() => navigation.navigate("NewTransaction")}
-      >
-        <Text style={{ color: "#fff", fontSize: 20 }}>+</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-// ---------- FRAME 4 ----------
-function NewTransaction({ navigation }) {
-  const [modalVisible, setModalVisible] = useState(true);
-  const [ingredient, setIngredient] = useState("Add new ingredient...");
-  const [unit, setUnit] = useState("");
-  const [qty, setQty] = useState("");
-  const [price, setPrice] = useState("");
-  const [store, setStore] = useState("");
-
-  return (
-    <Modal visible={modalVisible} animationType="slide" transparent={true}>
-      <View style={{ flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-        <View style={{ margin: 20, padding: 20, backgroundColor: "#fff", borderRadius: 10 }}>
-          <Header />
-          <Text style={{ fontSize: 18, marginBottom: 10 }}>New Transaction</Text>
-
-          <Picker selectedValue={ingredient} onValueChange={(val) => setIngredient(val)}>
-            <Picker.Item label="Add new ingredient.." value="new" />
-            <Picker.Item label="Beef" value="Beef" />
-            <Picker.Item label="Garlic" value="Garlic" />
-            <Picker.Item label="Onion" value="Onion" />
-          </Picker>
-
-          {ingredient === "new" && (
-            <TextInput placeholder="Type new ingredient" style={{ borderBottomWidth: 1, marginBottom: 10 }} />
-          )}
-
-          <TextInput
-            placeholder="Quantity"
-            keyboardType="numeric"
-            value={qty}
-            onChangeText={setQty}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <Picker selectedValue={unit} onValueChange={(val) => setUnit(val)}>
-            <Picker.Item label="pc/s" value="pcs" />
-            <Picker.Item label="kg/s" value="kg" />
-            <Picker.Item label="sack/s" value="sack" />
-            <Picker.Item label="pack/s" value="pack" />
-          </Picker>
-
-          <TextInput
-            placeholder="Price"
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <TextInput
-            placeholder="Store"
-            value={store}
-            onChangeText={setStore}
-            style={{ borderBottomWidth: 1, marginBottom: 10 }}
-          />
-
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Button title="Save" onPress={() => { setModalVisible(false); navigation.goBack(); }} />
-            <Button title="Cancel" color="red" onPress={() => { setModalVisible(false); navigation.goBack(); }} />
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-// ---------- FRAME 5 ----------
-function TransactionDetails({ route }) {
-  const { ingredient } = route.params;
-  const transactions = [
-    { id: "1", type: "IN", date: "09/18/2025", qty: "2 kg", price: "₱350", store: "Store A" },
-    { id: "2", type: "OUT", date: "09/18/2025", qty: "1 kg" },
-    { id: "3", type: "IN", date: "09/18/2025", qty: "3 kg", price: "₱500", store: "Store B" },
-  ];
-
-  return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Header />
-      <Text style={{ fontSize: 22, marginBottom: 15 }}>{ingredient.name}</Text>
-      {transactions.map((t) => (
-        <View key={t.id} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-          <Text>{t.type}</Text>
-          <Text>
-            {t.date} - {t.qty} {t.price ?  - ${t.price} : ""} {t.store ?  - ${t.store} : ""}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-// ---------- MAIN APP ----------
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="RawMaterials" component={RawMaterials} />
-        <Stack.Screen name="Transactions" component={Transactions} />
-        <Stack.Screen name="NewTransaction" component={NewTransaction} />
-        <Stack.Screen name="TransactionDetails" component={TransactionDetails} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
+export const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+    backgroundColor: "#fdfdfd",
+    padding: 15,
+    paddingTop: 40,
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#333",
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginVertical: 10,
+    color: "#444",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: "#fafafa",
+  },
+  Picker: {
+    borderWidth: 1,
+    borderColor: "#c5c5c5ff",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: "#fafafa",
+  },
+  button: {
+    backgroundColor: "#5a2c2c",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#bca4a4",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  transactionCard: {
+    backgroundColor: "#fff",
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  transactionText: { fontSize: 15, color: "#333" },
+  note: { fontStyle: "italic", color: "#777", marginTop: 4 },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 20,
+    marginBottom: 60,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  stockItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 6,
+  },
+  stockText: { marginLeft: 8, fontSize: 15, color: "#333" },
+  backButton: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
+    borderWidth: 2,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#5a2c2c",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  toggleText: {
+    color: "#5a2c2c",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});

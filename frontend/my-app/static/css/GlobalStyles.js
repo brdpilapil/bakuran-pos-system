@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-const styles = StyleSheet.create({
+const globalStyles = StyleSheet.create({
   centerContent: {
     flex: 1,
     justifyContent: "center",
@@ -19,6 +19,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
   },
+  body: {
+    flex: 1,
+    backgroundColor: "#f3ebea",
+    marginBottom: 100,
+  },
   logo: {
     width: 150,
     height: 150,
@@ -31,7 +36,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     color: "#5a2c2c",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   input: {
     width: "80%",
@@ -119,9 +124,59 @@ const styles = StyleSheet.create({
   backButton: {
     position: "absolute",
     top: 20,
-    left: 10,
+    left: 15,
     zIndex: 10,
+    backgroundColor: "#5c2121",
+    borderRadius: 20,
+    padding: 8,
+    elevation: 5,
+  },
+  addButton: {
+    position: "absolute",
+    top: 20,
+    right: 15,
+    backgroundColor: "#5c2121",
+    borderRadius: 20,
+    padding: 8,
+    elevation: 5,
+  },
+  cancelButtonText: {
+    color: "#5a2c2c",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonDisabled: {
+    backgroundColor: "#bca4a4",
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  phoneFrame: {
+    width: 400, // or adjust for ratio — try 400x888 if 1080x2400 looks too tall
+    height: 888,
+    overflow: "hidden",
+    borderRadius: 20,
+    backgroundColor: "#f3ebea",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  webWrapper: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#e0e0e0",
   },
 });
 
-export default styles;
+export default globalStyles;
